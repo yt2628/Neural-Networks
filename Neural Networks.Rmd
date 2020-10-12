@@ -1,0 +1,122 @@
+---
+title: "Neural Networks"
+author: "Eva Tao"
+date: "03/07/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In the attached data sets attention1.csv and attention2.csv, you will find data that describe features assocaited with webcam images of 100 students' faces as they particpate in an online discussion. The variables are:
+
+eyes - student has their eyes open (1 = yes, 0 = no)
+face.forward - student is facing the camera (1 = yes, 0 = no)
+chin.up - student's chin is raised above 45 degrees (1 = yes, 0 = no)
+attention - whether the student was paying attention when asked (1 = yes, 0 = no)
+
+We will use the webcam data to build a neural net to predict whether or not a student is attending.
+
+Load the package
+```{r}
+library(neuralnet)
+```
+
+Load data
+```{r}
+D1 <- read.csv("attention1.csv")
+D2 <- read.csv("attention2.csv")
+```
+
+Now, build a neural net that predicts attention based on webcam images, using the "neuralnet" function in the neuralnet package. The function "neuralnet" sets up the model. It takes 4 arguments:
+
+- A formula that describes the inputs and outputs of the neural net (output: attention; input: eyes, face.forward, chin.up)
+- The data frame that the model will use
+- How many hidden layers are in our neural net (in this case, 1)
+- A threshold that tells the model when to stop adjusting weights to find a better fit. If error does not change more than the threshold from one iteration to the next, the algorithm will stop (We use 0.01, so if prediction error does not change by more than 1% from one iteration to the next, the algorithm will halt)
+
+```{r}
+net <- neuralnet(attention ~ eyes + face.forward + chin.up, D1, hidden = 1, threshold = 0.01)
+plot(net)
+```
+
+We have now trained a neural network. The plot above shows the layers of the newtork as black nodes and edges with the calculated weights on each edge. The blue nodes and edges represent bias terms. The bias term anchors the activation function, the weights change the shape of the activation function while the bias term changes the overall position of the activation function - an analogy can be made to the intercept of the regression equation, in linear regression. It shifts the trend line up and down the y axis, while the other parameters change the angle of the line. The plot also reports the final error rate and the number of iterations ("steps") that it took to reach these weights.
+
+What happens if we increase the number of hidden layers in the neural net? We build a second neural net with more layers in it and determine if this improves the predictions.
+```{r}
+net2 <- neuralnet(attention ~ eyes + face.forward + chin.up, D1, hidden = 2, threshold = 0.01)
+plot(net2)
+```
+In the second neural network, we add a hidden layer, and the error rate deceases from 0.00714 to 0.00203. The second network works better than the first one with a lower error rate.
+
+Now, we can use the second neural net to make predictions on the second dataset. To do this, we first create a new data frame (D3) that only includes the input in the training dataset (D1). We will then compare the predicted output to the original output variable "attention" in both the training (D1) and the test(D2) datasets.
+
+```{r}
+# Input of the training dataset
+D3 <- D1[,-4]
+
+#Use the second neural network to make predictions
+net.prediction.train <- neuralnet::compute(net2, D3)
+prediction.train <- net.prediction.train$net.result
+
+# convert the prediction results to a binary scale depending on their distances to 0 and 1
+prediction.train[which(abs(prediction.train-0) > abs(1-prediction.train))] <- 1
+prediction.train[which(prediction.train != 1)] <- 0
+
+# add the binary prediction results to D3 as the predicted output
+D3$prediction.train <- prediction.train
+
+# add the original output "attention" to D3
+D3$train <- D1$attention
+table(D3$train, D3$prediction.train)
+
+# compare
+D3$accuracy <- D3$prediction.train - D3$train
+
+# number of error cases
+error.train <- sum(abs(D3$accuracy))
+
+# accuracy rate of the test dataset
+(nrow(D3)-error.train)/nrow(D3)
+```
+
+```{r}
+# repeat the above process on the test dataset D2
+D4 <- D2[,-4]
+net.prediction.test <- neuralnet::compute(net2, D4)
+prediction.test <- net.prediction.test$net.result
+prediction.test[which(abs(prediction.test-0) > abs(1-prediction.test))] <- 1
+prediction.test[which(prediction.test != 1)] <- 0
+D4$prediction.test <- prediction.test
+D4$test <- D2$attention
+table(D4$test, D4$prediction.test)
+
+# compare
+D4$accuracy <- D4$prediction.test - D4$test
+table(D4$accuracy)
+
+# number of error cases
+error.test <- sum(abs(D4$accuracy))
+
+# accuracy rate of the test dataset
+(nrow(D4)-error.test)/nrow(D4)
+```
+
+
+## Conclusions and Discussion
+
+1. How accurate is the neural net?
+
+In the "accuracy" column, 0 means that there is no difference between the prediction and the actual attention status, while 1 or -1 means that there is a difference. So the number of 0's represents the number of successful predictions. On the training set, the predictions we made were all correct. On the test dataset, as shown in the table of "accuracy" column, there are 94 successful predictions and 6 unsuccessful ones out of the 100 total predictions. The accuracy rate is 94%.
+
+2. How can we explain the model to the students whose behavior we are predicting? 
+
+Based on the status of eyes, face and chin in the webcam image, we can predict whether a student is paying attention without actually asking them a question in the online discussion.
+
+3. This is a very simple example of a neural network. Real facial recognition is very complex though. Would a neural network be a good solution for predicting real facial movements? Why, why not? 
+
+A neural network can not be a good solution for facial recognition unless we know exactly what facial movements mean. There are numerous variations of facial movements and a combination of different elements can express different meanings. If we can segment facial movements into tiny elements, and define each elements approriately,
+then neural network can be a good solution.
