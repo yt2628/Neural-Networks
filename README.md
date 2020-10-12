@@ -31,6 +31,12 @@ install.packages("neuralnet")
 ## Background
 Neural networks are not a new method, the first artificial neural network was devised in 1943, but advances in computational power and speed have made them a much more viable strategy for solving complex problems over the last 5-10 years. Originally devised by mathmaticians and neuroscientists to illustrate the fundamental principles of how brains might work they lost favor in the second half of the 20th century only to surge in popularity in the 20-teens as software engineers used them to resolve mathmatically intractable problems. The application of neural networks to learning problems has been ongoing for 20 years, often to predict student behvior or to parse unstructured data such as student writing samples and provide natural sounding feedback through AI avatars.
 
+### Brief Introduction to Concepts
+**Neurons** or **nodes** is a loose analogy to biological neurons. They are processors of information that lead us to the output. Each neuron is connected with another neuron through a link. Each link is specified by a weight and a bias.
+The **input layer** accepts independent variables or our input of data; they are then passed through to **hidden layers** and eventually the **output layer**, which generates predictions.
+Each time we feed input information to the network, it generates a predicted output, with which we compare the target output we want. The difference between the prediction and the target is the **cost**. By feeding a large amount of cases into the network, we arrive at the weights and biases parameters that would minimize the average costs. **Gradient descendent** is calculated and used to make these adjustments. Commonly, training data are randomly divided into small batches to generate approximate descendents more quickly, referred to as stochastic gradient descendents, to speed up the process. 
+**Back propogation** is the algorithm for determining how a single training example would modify the weights and biases.
+
 ##  References
 
 Nielsen, M. (2015). Neural Networks & Deep Learning. Determination Press:San Francisco, CA  
